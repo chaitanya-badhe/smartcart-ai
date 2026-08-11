@@ -6,15 +6,6 @@ export default defineConfig({
   server: {
     host: true,
     port: 5173,
-    strictPort: true,
-    hmr: {
-      overlay: true,
-      protocol: 'ws',
-      host: 'localhost',
-    },
-    watch: {
-      usePolling: true,
-      interval: 100,
-    },
-  },
+    strictPort: true
+  }
 })
