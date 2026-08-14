@@ -6,37 +6,56 @@ import { AuthContext } from './context/AuthProvider'
 
 const App = () => {
 
-  const [user, setUser] = useState(null)
+    const [user, setUser] = useState(null)
 
-  const handleLogin = (email, password) => {
+    const authData = useContext(AuthContext)
 
-    if (email === 'admin@me.com' && password === '123') {
-      setUser('admin')
+    const handleLogin = (email, password) => {
+
+
+
+        if (
+            authData?.admin?.find(
+                (e) => email === e.email && password === e.password
+            )
+        ) {
+            setUser('admin')
+        }
+
+        // Employee Login
+        else if (
+            authData?.employees?.find(
+                (e) => email === e.email && password === e.password
+            )
+        ) {
+            setUser('employee')
+        }
+
+        else {
+            alert('Invalid credentials')
+        }
     }
 
-    else if (email === 'user@me.com' && password === '123') {
-      setUser('employee')
-    }
+    return (
+        <>
 
-    else {
-      alert('Invalid credentials')
-    }
-  }
+            {/* Login */}
+            {!user && (
+                <Login handleLogin={handleLogin} />
+            )}
 
-  const data = useContext(AuthContext)
+            {/* Admin Dashboard */}
+            {user === 'admin' && (
+                <AdminDashBoard />
+            )}
 
-  return (
-    <>
-      {/* Show Login page when nobody is logged in */}
-      {!user && <Login handleLogin={handleLogin} />}
+            {/* Employee Dashboard */}
+            {user === 'employee' && (
+                <EmployeeDashBoard />
+            )}
 
-      {/* Show Admin Dashboard only for admin */}
-      {user === 'admin' && <AdminDashBoard />}
-
-      {/* Show Employee Dashboard only for employee */}
-      {user === 'employee' && <EmployeeDashBoard />}
-    </>
-  )
+        </>
+    )
 }
 
 export default App
