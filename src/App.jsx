@@ -1,58 +1,211 @@
-import React, { useContext, useState } from 'react'
+import React, {
+    useContext,
+    useEffect,
+    useState
+} from 'react'
+
 import Login from './components/Auth/Login'
 import EmployeeDashBoard from './components/Dashboard/EmployeeDashBoard'
 import AdminDashBoard from './components/Dashboard/AdminDashBoard'
+
 import { AuthContext } from './context/AuthProvider'
+
 
 const App = () => {
 
     const [user, setUser] = useState(null)
 
+    const [loggedInUserData, setLoggedInUserData] =
+        useState(null)
+
     const authData = useContext(AuthContext)
+
+
+    // ==========================================
+    // CHECK PREVIOUS LOGIN
+    // ==========================================
+
+    useEffect(() => {
+
+        const loggedInUser =
+            localStorage.getItem('loggedInUser')
+
+
+        if (!loggedInUser) {
+            return
+        }
+
+
+        try {
+
+            const parsedUser =
+                JSON.parse(loggedInUser)
+
+
+            // ADMIN
+            if (parsedUser.role === 'admin') {
+
+                setUser('admin')
+
+                return
+            }
+
+
+            // EMPLOYEE
+            if (parsedUser.role === 'employee') {
+
+                const employee =
+                    authData?.employees?.find(
+                        (employee) =>
+                            employee.id === parsedUser.id
+                    )
+
+
+                if (employee) {
+
+                    setUser('employee')
+
+                    setLoggedInUserData(employee)
+
+                } else {
+
+                    localStorage.removeItem(
+                        'loggedInUser'
+                    )
+
+                }
+            }
+
+        } catch (error) {
+
+            console.error(
+                'Login data error:',
+                error
+            )
+
+            localStorage.removeItem(
+                'loggedInUser'
+            )
+        }
+
+    }, [authData])
+
+
+    // ==========================================
+    // LOGIN
+    // ==========================================
 
     const handleLogin = (email, password) => {
 
-
-
-        if (
+        // ADMIN LOGIN
+        const admin =
             authData?.admin?.find(
-                (e) => email === e.email && password === e.password
+                (admin) =>
+                    admin.email === email &&
+                    admin.password === password
             )
-        ) {
+
+
+        if (admin) {
+
             setUser('admin')
-        }
 
-        // Employee Login
-        else if (
-            authData?.employees?.find(
-                (e) => email === e.email && password === e.password
+            localStorage.setItem(
+                'loggedInUser',
+                JSON.stringify({
+                    role: 'admin',
+                    id: admin.id
+                })
             )
-        ) {
-            setUser('employee')
+
+            return
         }
 
-        else {
-            alert('Invalid credentials')
+
+        // EMPLOYEE LOGIN
+        const employee =
+            authData?.employees?.find(
+                (employee) =>
+                    employee.email === email &&
+                    employee.password === password
+            )
+
+
+        if (employee) {
+
+            setUser('employee')
+
+            setLoggedInUserData(employee)
+
+            localStorage.setItem(
+                'loggedInUser',
+                JSON.stringify({
+                    role: 'employee',
+                    id: employee.id
+                })
+            )
+
+            return
         }
+
+
+        // INVALID LOGIN
+        alert('Invalid credentials')
     }
+
+
+    // ==========================================
+    // LOGOUT
+    // ==========================================
+
+    const handleLogout = () => {
+
+        localStorage.removeItem(
+            'loggedInUser'
+        )
+
+        setUser(null)
+
+        setLoggedInUserData(null)
+    }
+
+
+    // ==========================================
+    // UI
+    // ==========================================
 
     return (
         <>
 
-            {/* Login */}
+            {/* LOGIN PAGE */}
+
             {!user && (
-                <Login handleLogin={handleLogin} />
+                <Login
+                    handleLogin={handleLogin}
+                />
             )}
 
-            {/* Admin Dashboard */}
+
+            {/* ADMIN DASHBOARD */}
+
             {user === 'admin' && (
-                <AdminDashBoard />
+                <AdminDashBoard
+                    handleLogout={handleLogout}
+                />
             )}
 
-            {/* Employee Dashboard */}
-            {user === 'employee' && (
-                <EmployeeDashBoard />
-            )}
+
+            {/* EMPLOYEE DASHBOARD */}
+
+            {user === 'employee' &&
+                loggedInUserData && (
+
+                    <EmployeeDashBoard
+                        data={loggedInUserData}
+                        handleLogout={handleLogout}
+                    />
+
+                )}
 
         </>
     )
